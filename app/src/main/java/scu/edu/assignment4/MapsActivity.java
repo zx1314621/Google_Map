@@ -15,7 +15,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
-import android.widget.ImageButton;
+import android.widget.Button;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -35,7 +35,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private GoogleMap mMap;
     private LocationManager myLocationManager;
+    private LocationManager myLocationManager_2;
     private String provider;
+    private String provider_2;
     private static final String TAG = "MapsActivity";
     private Marker current;
     private Marker home;
@@ -49,7 +51,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-        ImageButton button = findViewById(R.id.button);
+        Button button = findViewById(R.id.button);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -59,14 +61,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         myLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        myLocationManager_2 = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
 
         List<String> list = myLocationManager.getProviders(true);
+        List<String> list_2 = myLocationManager_2.getProviders(true);
+
 
         if (list.contains(LocationManager.GPS_PROVIDER)) {
             provider = LocationManager.GPS_PROVIDER;
         } else if (list.contains(LocationManager.NETWORK_PROVIDER)) {
             provider = LocationManager.NETWORK_PROVIDER;
+
+        } else {
+            Toast.makeText(this, "please open the network or gps",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if (list_2.contains(LocationManager.GPS_PROVIDER)) {
+            provider_2 = LocationManager.GPS_PROVIDER;
+        } else if (list.contains(LocationManager.NETWORK_PROVIDER)) {
+            provider_2 = LocationManager.NETWORK_PROVIDER;
 
         } else {
             Toast.makeText(this, "please open the network or gps",
@@ -84,10 +100,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        myLocationManager.requestLocationUpdates(provider, 5000, 10, new LocationListener() {
+        myLocationManager_2.requestLocationUpdates(provider, 30000, 0, new LocationListener() {
             @Override
             public void onLocationChanged(@NonNull Location location) {
+                Log.d(TAG, "auto get current 2 :" + location.getLatitude() + ":" + location.getLongitude());
                 current.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
+            }
+        });
+        myLocationManager.requestLocationUpdates(provider, 3000, 0, new LocationListener() {
+            @Override
+            public void onLocationChanged(@NonNull Location location) {
+                Log.d(TAG, "auto get current" + location.getLatitude() + ":" + location.getLongitude());
+                //current.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
             }
         });
 
@@ -137,6 +161,29 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
 
 
+//        new Thread(new Runnable() {
+//            public void run(){
+//
+//                runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        try {
+//                            Thread.sleep(5000);
+//
+//                            LatLng cln = getCurrentLocation();
+//                            Log.d(TAG, "auto set current" + cln.latitude + ":" + cln.longitude);
+//                            current.setPosition(cln);
+//                        } catch (InterruptedException e) {
+//                            e.printStackTrace();
+//                        }
+//
+//                    }
+//                });
+//
+//            }
+//        }).start();
+
+
     }
     private LatLng getCurrentLocation() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -147,6 +194,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return null;
         }
         LatLng currentLoc = null;
+
+
         Location location = myLocationManager.getLastKnownLocation(provider);
 
         if (location != null) {
